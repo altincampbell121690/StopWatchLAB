@@ -7,3 +7,5 @@ e
 5app/src/main/java/com/digisafari/stopwatch/MainApp.kt,f\0\f0b132909d16095c2ebf557e4ed06d3c921ff8db
 z
 Japp/src/main/java/com/digisafari/stopwatch/components/CustomAlertDialog.kt,9\0\90375e3c2e0aca9475a8990266c5b0e3ee8ec045
+€
+Papp/src/main/java/com/digisafari/stopwatch/services/CustomNotificationService.kt,b\9\b98bb238a6bea8cd480628c5a0a25c870c8bda39

@@ -47,6 +47,7 @@ import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    // Note: For Android 13+ we must check if the permission is already granted.
     private fun isNotificationPermissionAlreadyGranted(): Boolean {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             return ContextCompat.checkSelfPermission(
@@ -78,7 +79,9 @@ class MainActivity : ComponentActivity() {
                     isNotificationPermissionAlreadyGranted()
                 )
             }
-
+            //NOTE: For Android 13+ we must check if the user has already seen rational and denied the permission.
+            // so we are creating a mutable state to handle this case.
+            // otherwise we are returning false
             var bShowPermissionRationale by remember {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     mutableStateOf(
@@ -114,6 +117,35 @@ class MainActivity : ComponentActivity() {
 
 
             // TODO: 14. Use DisposableEffect and create a LifeCycleEventObserver. For the different lifecycle state, either launch permissions, or notifications or cancel the notifications.
+            val lifecycleOwner = LocalLifecycleOwner.current
+
+            DisposableEffect(key1 = lifecycleOwner, effect = {
+                val observer = LifecycleEventObserver { _, event ->
+                    when {
+                        (event == Lifecycle.Event.ON_START) -> {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !bNotificationPermissionGranted && !bShowPermissionRationale) {
+                                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            }
+                        }
+
+                        (event == Lifecycle.Event.ON_RESUME) -> {
+                            notificationService.cancelBackgroundNotification()
+                        }
+
+                        (event == Lifecycle.Event.ON_STOP) -> {
+                            notificationService.showBackgroundNotification()
+                        }
+
+                        (event == Lifecycle.Event.ON_DESTROY) -> {
+                            notificationService.cancelBackgroundNotification()
+                        }
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
+                onDispose {
+                    lifecycleOwner.lifecycle.removeObserver(observer)
+                }
+            })
 
             // TODO: 5. Create the scope and snackBarHostState for the Snackbar
             val scope = rememberCoroutineScope()
